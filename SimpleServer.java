@@ -1,17 +1,28 @@
 import java.net.*;
 import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 
-public class SimpleServer {
-	public static void main(String args[]) throws IOException {
+public class SimpleServer 
+{
+	static final int maxThreads = 10;
+	static final int port = 1234;
+
+	public static void main(String args[]) throws IOException 
+	{
 		// Register service on port 1234
-		ServerSocket s = new ServerSocket(1234);
-		Socket s1 = s.accept();
+		ServerSocket s = new ServerSocket(port);
+		ExecutorService pool = Executors.newFixedThreadPool(maxThreads);
 
-		OutputStream s1out = s1.getOutputStream();
-		DataOutputStream dos = new DataOutputStream(s1out);
-		dos.writeUTF("Waddup");
-		dos.close();
-		s1out.close();
-		s1.close();
+		// listen for new connections, create new request handler to process request
+		try {
+			while (true) {
+				pool.execute(new RequestHandler(s.accept()));
+			}
+		} catch (IOException ioe) {
+			pool.shutdown();
+		}
+
+		s.close();
 	}
 }
